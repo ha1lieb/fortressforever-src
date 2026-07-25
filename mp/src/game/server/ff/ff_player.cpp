@@ -986,6 +986,70 @@ void CFFPlayer::SetLastSpawn( CBaseEntity *pEntity )
 	if( !pEntity )
 		g_pLastSpawnRandomizer = NULL;
 }
+// "But in 3rd person so you can like rotate around it"
+bool CFFPlayer::IsValidObserverTarget(CBaseEntity* target)
+{
+	if (!target)
+	return false;
+
+	Class_T targetClass = target->Classify();
+	if (targetClass == CLASS_SENTRYGUN || targetClass == CLASS_DISPENSER || targetClass == CLASS_DETPACK)
+	{
+		return true;
+	}
+	return BaseClass::IsValidObserverTarget(target);
+}
+
+CBaseEntity* CFFPlayer::FindNextObserverTarget(bool bReverse)
+{
+	CUtlVector<CBaseEntity*> targetList;
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		CBaseEntity* pPlayer = UTIL_PlayerByIndex(i);
+		if (pPlayer)
+		targetList.AddToTail(pPlayer);
+	}
+
+	CBaseEntity* pScript = gEntList.FindEntityByClassT(NULL, CLASS_INFOSCRIPT);
+	while (pScript)
+	{
+		const char* pszName = STRING(pScript->GetEntityName());
+		if (pszName && (Q_stristr(pszName, "flag") || Q_stristr(pszName, "ball")))
+		targetList.AddToTail(pScript);
+		pScript = gEntList.FindEntityByClassT(pScript, CLASS_INFOSCRIPT);
+	}
+
+	Class_T buildableClasses[] = {CLASS_SENTRYGUN, CLASS_DISPENSER, CLASS_DETPACK};
+	for (int i = 0; i < ARRAYSIZE(buildableClasses); i++)
+	{
+		CBaseEntity* pBuildable = gEntList.FindEntityByClassT(NULL, buildableClasses[i]);
+		while (pBuildable)
+		{
+			targetList.AddToTail(pBuildable);
+			pBuildable = gEntList.FindEntityByClassT(pBuildable, buildableClasses[i]);
+		}
+	}
+
+	if (targetList.Count() == 0)
+	return NULL;
+
+	int iCurrentIndex = targetList.Find(m_hObserverTarget.Get());
+	int iDir = bReverse ? -1 : 1;
+	int iStart = (iCurrentIndex == targetList.InvalidIndex()) ? 0 : iCurrentIndex;
+	int iIndex = iStart;
+
+	do
+	{
+		iIndex += iDir;
+		if (iIndex >= targetList.Count())
+			iIndex = 0;
+		else if (iIndex < 0)
+			iIndex = targetList.Count() - 1;
+		if (IsValidObserverTarget(targetList[iIndex]))
+			return targetList[iIndex];
+	} while (iIndex != iStart);
+	return NULL;
+}
 
 CBaseEntity *CFFPlayer::EntSelectSpawnPoint()
 {
