@@ -575,7 +575,7 @@ void CFFBuildableObject::GoLive( void )
 	//SetCollisionGroup( COLLISION_GROUP_PLAYER );
 	SetCollisionGroup( COLLISION_GROUP_BUILDABLE );
 
-// Gib people caught inside the buildable after it's deployed to avoid trapping them
+// Gib people that were inside the buildable in the end of the process of its building so they dont stuck
 #if !defined( CLIENT_DLL )
 	if (Classify() != CLASS_MANCANNON)
 	{
@@ -1253,11 +1253,19 @@ int CFFBuildableObject::OnTakeDamage( const CTakeDamageInfo &info )
 
 				if (losTrace.fraction >= 1.0f || losTrace.m_pEnt == this)
 				{
+					bool bFriendlyFire = (pAttacker->GetTeamNumber() == GetTeamNumber());
+					bool bWillDestroy = (GetHealth() - adjustedDamage.GetDamage()) <= 0;
+					int iTargetType = 2;
+					if (bFriendlyFire)
+					iTargetType = 3;
+					else if (bWillDestroy)
+					iTargetType = 0;
+
 					CSingleUserRecipientFilter EHPFilter(pAttacker);
 					UserMessageBegin(EHPFilter, "DamageNumber");
 					WRITE_SHORT(entindex());
 					WRITE_SHORT(iEHPDamage);
-					WRITE_BYTE(2);
+					WRITE_BYTE(iTargetType);
 					WRITE_FLOAT(CollisionProp()->WorldSpaceCenter().x);
 					WRITE_FLOAT(CollisionProp()->WorldSpaceCenter().y);
 					WRITE_FLOAT(CollisionProp()->WorldSpaceCenter().z);
