@@ -231,24 +231,24 @@ public:
 	void Spawn()
 	{
 		Precache();
-	
+
 		// These are the same as the backpack.
 		SetSolid(SOLID_NONE);
 		AddSolidFlags(FSOLID_NOT_STANDABLE|FSOLID_TRIGGER);
 		SetCollisionGroup(COLLISION_GROUP_TRIGGERONLY);
-
+		
 		SetMoveType(MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE);
-
+		
 		SetModel(HEALTHDROP_MODEL);
 		SetSize(Vector(-10, -15, -0.1f), Vector(10, 15, 0.1f));
-	
+
 		CollisionProp()->UseTriggerBounds(true, ITEM_PICKUP_BOX_BLOAT);
-
+		
 		SetNextThink(gpGlobals->curtime + HEALTHDROP_LIFE);
-
+		
 		SetTouch(&CFFItemHealthDrop::RestockTouch);
 		SetThink(&CFFItemHealthDrop::SUB_Remove);
-
+		
 		m_flSpawnTime = gpGlobals->curtime;
 	}
 
@@ -285,7 +285,7 @@ public:
 		bool bCured = pFFPlayer->Cure(pFFOwner);
 
 		// Remove if we heal any health or if we cure any afflictions
-		if ( ( pFFPlayer->GetHealth() < pFFPlayer->GetMaxHealth() && pFFPlayer->Heal(ToFFPlayer(GetOwnerEntity()), 15.0f, false) ) || bCured )
+		if ( ( pFFPlayer->GetHealth() < pFFPlayer->GetMaxHealth() && pFFPlayer->Heal(ToFFPlayer(GetOwnerEntity()), 30.0f, false) ) || bCured )
 		{
 			EmitSound(HEALTHDROP_SOUND);
 			UTIL_Remove(this);	
