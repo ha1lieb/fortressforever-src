@@ -484,7 +484,7 @@ void CFFWeaponSniperRifle::Fire()
 // Purpose: 
 //			TODO: Really need to fix this!!!!
 //-----------------------------------------------------------------------------
-void CFFWeaponSniperRifle::ToggleZoom() 
+void CFFWeaponSniperRifle::ToggleZoom()
 {
 #ifdef CLIENT_DLL
 	if (m_flNextZoomTime > gpGlobals->curtime)
@@ -494,7 +494,7 @@ void CFFWeaponSniperRifle::ToggleZoom()
 	m_flZoomTime = gpGlobals->tickcount * gpGlobals->interval_per_tick;
 
 	m_bZoomed = !m_bZoomed;
-	
+
 	C_FFPlayer *pPlayer = GetPlayerOwner();
 
 	if (pPlayer)
@@ -514,9 +514,21 @@ void CFFWeaponSniperRifle::ToggleZoom()
 	CFFPlayer* pPlayer = GetPlayerOwner();
 	if (pPlayer)
 	{
-		CPASAttenuationFilter filter(pPlayer, m_bZoomed ? "SniperRifle.zoom_in" : "SniperRifle.zoom_out");
+		const char* pszZoomSound = m_bZoomed ? "SniperRifle.zoom_in" : "SniperRifle.zoom_out";
+		CPASAttenuationFilter filter(pPlayer, pszZoomSound);
 		filter.RemoveRecipient(pPlayer);
-		pPlayer->EmitSound(filter, pPlayer->entindex(), m_bZoomed ? "SniperRifle.zoom_in" : "SniperRifle.zoom_out");
+		CSoundParameters params;
+		if (GetParametersForSound(pszZoomSound, params, NULL))
+		{
+			EmitSound_t ep(params);
+			ep.m_flVolume = clamp(ep.m_flVolume * 3.0f, 0.0f, 1.0f);
+			ep.m_SoundLevel = (soundlevel_t)81;
+			pPlayer->EmitSound(filter, pPlayer->entindex(), ep);
+		}
+		else
+		{
+			pPlayer->EmitSound(filter, pPlayer->entindex(), pszZoomSound);
+		}
 	}
 #endif
 }
